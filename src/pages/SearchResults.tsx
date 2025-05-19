@@ -6,6 +6,7 @@ import ListingCard from "@/components/ListingCard";
 import { searchListings } from "@/data/mockData";
 import { Listing } from "@/types";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const SearchResults = () => {
   const location = useLocation();
@@ -52,8 +53,8 @@ const SearchResults = () => {
             <p className="text-muted-foreground mb-4">
               We couldn't find any listings matching your search.
             </p>
-            <Button href="/" asChild>
-              <a href="/">Back to Home</a>
+            <Button asChild>
+              <Link to="/">Back to Home</Link>
             </Button>
           </div>
         )}

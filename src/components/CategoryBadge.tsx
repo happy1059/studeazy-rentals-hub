@@ -1,7 +1,7 @@
 
 import { Category } from "@/types";
 import { Badge } from "@/components/ui/badge";
-import { Home, Utensils, Bike, Laundry } from "lucide-react";
+import { Home, Utensils, Bike, Shirt } from "lucide-react";
 
 interface CategoryBadgeProps {
   category: Category;
@@ -33,7 +33,7 @@ const CategoryBadge = ({ category, showIcon = true, className = "" }: CategoryBa
       case "laundry":
         return { 
           label: "Laundry", 
-          icon: <Laundry className="h-3 w-3 mr-1" />,
+          icon: <Shirt className="h-3 w-3 mr-1" />,
           variant: "destructive" as const
         };
       default:

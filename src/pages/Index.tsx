@@ -6,7 +6,7 @@ import Navbar from "@/components/Navbar";
 import CategorySection from "@/components/CategorySection";
 import { getAllListings, getListingsByCategory } from "@/data/mockData";
 import { Listing } from "@/types";
-import { Home, Utensils, Bike, Laundry } from "lucide-react";
+import { Home, Utensils, Bike, Shirt } from "lucide-react";
 
 const Index = () => {
   const [listings, setListings] = useState<{
@@ -93,7 +93,7 @@ const Index = () => {
           <Link to="/listings/laundry" className="group">
             <div className="border rounded-lg p-6 text-center transition-all hover:border-brand-500 hover:shadow-md">
               <div className="bg-brand-100 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors group-hover:bg-brand-200">
-                <Laundry className="h-8 w-8 text-brand-600" />
+                <Shirt className="h-8 w-8 text-brand-600" />
               </div>
               <h3 className="font-medium">Laundry Services</h3>
               <p className="text-sm text-muted-foreground mt-1">
