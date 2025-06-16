@@ -16,10 +16,11 @@ import {
 import { toast } from "sonner";
 import { Category } from "@/types";
 import { createListing } from "@/services/listingsService";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const CreateListing = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
     title: "",
@@ -33,6 +34,12 @@ const CreateListing = () => {
     amenities: "",
     tags: "",
   });
+
+  // Redirect to auth if not logged in
+  if (!user) {
+    navigate("/auth");
+    return null;
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -49,14 +56,6 @@ const CreateListing = () => {
     // Simple validation
     if (!form.title || !form.description || !form.category || !form.price || !form.location) {
       toast.error("Please fill in all required fields");
-      return;
-    }
-
-    // Check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error("Please log in to create a listing");
-      navigate("/auth");
       return;
     }
 

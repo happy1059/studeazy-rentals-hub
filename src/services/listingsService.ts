@@ -27,88 +27,113 @@ const convertDatabaseListingToListing = (dbListing: DatabaseListing): Listing =>
 };
 
 export const getAllListings = async (): Promise<Listing[]> => {
-  const { data, error } = await supabase
-    .from('listings')
-    .select('*')
-    .eq('status', 'active')
-    .order('created_at', { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from('listings' as any)
+      .select('*')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('Error fetching listings:', error);
+    if (error) {
+      console.error('Error fetching listings:', error);
+      return [];
+    }
+
+    return (data as DatabaseListing[]).map(convertDatabaseListingToListing);
+  } catch (error) {
+    console.error('Error in getAllListings:', error);
     return [];
   }
-
-  return data.map(convertDatabaseListingToListing);
 };
 
 export const getListingById = async (id: string): Promise<Listing | null> => {
-  const { data, error } = await supabase
-    .from('listings')
-    .select('*')
-    .eq('id', id)
-    .eq('status', 'active')
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('listings' as any)
+      .select('*')
+      .eq('id', id)
+      .eq('status', 'active')
+      .single();
 
-  if (error) {
-    console.error('Error fetching listing:', error);
+    if (error) {
+      console.error('Error fetching listing:', error);
+      return null;
+    }
+
+    return convertDatabaseListingToListing(data as DatabaseListing);
+  } catch (error) {
+    console.error('Error in getListingById:', error);
     return null;
   }
-
-  return convertDatabaseListingToListing(data);
 };
 
 export const getListingsByCategory = async (category: string): Promise<Listing[]> => {
-  const { data, error } = await supabase
-    .from('listings')
-    .select('*')
-    .eq('category', category)
-    .eq('status', 'active')
-    .order('created_at', { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from('listings' as any)
+      .select('*')
+      .eq('category', category)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('Error fetching listings by category:', error);
+    if (error) {
+      console.error('Error fetching listings by category:', error);
+      return [];
+    }
+
+    return (data as DatabaseListing[]).map(convertDatabaseListingToListing);
+  } catch (error) {
+    console.error('Error in getListingsByCategory:', error);
     return [];
   }
-
-  return data.map(convertDatabaseListingToListing);
 };
 
 export const searchListings = async (query: string): Promise<Listing[]> => {
-  const { data, error } = await supabase
-    .from('listings')
-    .select('*')
-    .eq('status', 'active')
-    .or(`title.ilike.%${query}%,description.ilike.%${query}%,location.ilike.%${query}%`)
-    .order('created_at', { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from('listings' as any)
+      .select('*')
+      .eq('status', 'active')
+      .or(`title.ilike.%${query}%,description.ilike.%${query}%,location.ilike.%${query}%`)
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('Error searching listings:', error);
+    if (error) {
+      console.error('Error searching listings:', error);
+      return [];
+    }
+
+    return (data as DatabaseListing[]).map(convertDatabaseListingToListing);
+  } catch (error) {
+    console.error('Error in searchListings:', error);
     return [];
   }
-
-  return data.map(convertDatabaseListingToListing);
 };
 
 export const createListing = async (listing: Omit<DatabaseListing, 'id' | 'created_at' | 'updated_at' | 'owner_id'>): Promise<string | null> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error('User must be authenticated to create listing');
-  }
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User must be authenticated to create listing');
+    }
 
-  const { data, error } = await supabase
-    .from('listings')
-    .insert([{
-      ...listing,
-      owner_id: user.id
-    }])
-    .select('id')
-    .single();
+    const { data, error } = await supabase
+      .from('listings' as any)
+      .insert([{
+        ...listing,
+        owner_id: user.id
+      }])
+      .select('id')
+      .single();
 
-  if (error) {
-    console.error('Error creating listing:', error);
+    if (error) {
+      console.error('Error creating listing:', error);
+      throw error;
+    }
+
+    return data.id;
+  } catch (error) {
+    console.error('Error in createListing:', error);
     throw error;
   }
-
-  return data.id;
 };

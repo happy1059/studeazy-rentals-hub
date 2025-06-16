@@ -15,42 +15,57 @@ const convertDatabaseUserToUser = (dbUser: DatabaseUserProfile): User => {
 };
 
 export const getUserById = async (id: string): Promise<User | null> => {
-  const { data, error } = await supabase
-    .from('user_profiles')
-    .select('*')
-    .eq('id', id)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('user_profiles' as any)
+      .select('*')
+      .eq('id', id)
+      .single();
 
-  if (error) {
-    console.error('Error fetching user:', error);
+    if (error) {
+      console.error('Error fetching user:', error);
+      return null;
+    }
+
+    return convertDatabaseUserToUser(data as DatabaseUserProfile);
+  } catch (error) {
+    console.error('Error in getUserById:', error);
     return null;
   }
-
-  return convertDatabaseUserToUser(data);
 };
 
 export const getCurrentUserProfile = async (): Promise<User | null> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) return null;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) return null;
 
-  return getUserById(user.id);
+    return getUserById(user.id);
+  } catch (error) {
+    console.error('Error in getCurrentUserProfile:', error);
+    return null;
+  }
 };
 
 export const updateUserProfile = async (updates: Partial<DatabaseUserProfile>): Promise<void> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error('User must be authenticated');
-  }
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User must be authenticated');
+    }
 
-  const { error } = await supabase
-    .from('user_profiles')
-    .update(updates)
-    .eq('id', user.id);
+    const { error } = await supabase
+      .from('user_profiles' as any)
+      .update(updates)
+      .eq('id', user.id);
 
-  if (error) {
-    console.error('Error updating user profile:', error);
+    if (error) {
+      console.error('Error updating user profile:', error);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error in updateUserProfile:', error);
     throw error;
   }
 };
