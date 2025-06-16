@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import CategorySection from "@/components/CategorySection";
-import { getAllListings, getListingsByCategory } from "@/data/mockData";
+import { getAllListings, getListingsByCategory } from "@/services/listingsService";
 import { Listing } from "@/types";
 import { Home, Utensils, Bike, Shirt } from "lucide-react";
 
@@ -21,20 +21,47 @@ const Index = () => {
     transport: [],
   });
 
-  useEffect(() => {
-    // Fetch listings by category
-    const accommodationListings = getListingsByCategory("accommodation");
-    const foodListings = getListingsByCategory("food");
-    const laundryListings = getListingsByCategory("laundry");
-    const transportListings = getListingsByCategory("transport");
+  const [isLoading, setIsLoading] = useState(true);
 
-    setListings({
-      accommodation: accommodationListings,
-      food: foodListings,
-      laundry: laundryListings,
-      transport: transportListings,
-    });
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Fetch listings by category
+        const [accommodationListings, foodListings, laundryListings, transportListings] = await Promise.all([
+          getListingsByCategory("accommodation"),
+          getListingsByCategory("food"),
+          getListingsByCategory("laundry"),
+          getListingsByCategory("transport"),
+        ]);
+
+        setListings({
+          accommodation: accommodationListings,
+          food: foodListings,
+          laundry: laundryListings,
+          transport: transportListings,
+        });
+      } catch (error) {
+        console.error('Error fetching listings:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchListings();
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex items-center justify-center flex-1">
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

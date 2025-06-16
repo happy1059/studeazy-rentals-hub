@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import ListingCard from "@/components/ListingCard";
-import { searchListings } from "@/data/mockData";
+import { searchListings } from "@/services/listingsService";
 import { Listing } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -17,14 +17,23 @@ const SearchResults = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(true);
-    if (searchQuery) {
-      const results = searchListings(searchQuery);
-      setListings(results);
-    } else {
-      setListings([]);
-    }
-    setIsLoading(false);
+    const fetchSearchResults = async () => {
+      try {
+        setIsLoading(true);
+        if (searchQuery) {
+          const results = await searchListings(searchQuery);
+          setListings(results);
+        } else {
+          setListings([]);
+        }
+      } catch (error) {
+        console.error('Error searching listings:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSearchResults();
   }, [searchQuery]);
 
   return (

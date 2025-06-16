@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { getListingsByCategory } from "@/data/mockData";
+import { getListingsByCategory } from "@/services/listingsService";
 import Navbar from "@/components/Navbar";
 import ListingCard from "@/components/ListingCard";
 import { Listing } from "@/types";
@@ -35,13 +35,25 @@ const CategoryListings = () => {
     null,
     null,
   ]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (category) {
-      const fetchedListings = getListingsByCategory(category);
-      setListings(fetchedListings);
-      setFilteredListings(fetchedListings);
-    }
+    const fetchListings = async () => {
+      if (category) {
+        try {
+          setIsLoading(true);
+          const fetchedListings = await getListingsByCategory(category);
+          setListings(fetchedListings);
+          setFilteredListings(fetchedListings);
+        } catch (error) {
+          console.error('Error fetching listings:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchListings();
   }, [category]);
 
   useEffect(() => {
@@ -100,6 +112,17 @@ const CategoryListings = () => {
         return "Listings";
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="container py-16 text-center">
+          <p>Loading listings...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

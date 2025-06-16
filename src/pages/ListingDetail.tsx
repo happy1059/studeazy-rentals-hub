@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getListingById, getUserById } from "@/data/mockData";
+import { getListingById } from "@/services/listingsService";
+import { getUserById } from "@/services/userService";
 import Navbar from "@/components/Navbar";
 import CategoryBadge from "@/components/CategoryBadge";
 import { Listing, User } from "@/types";
@@ -20,19 +21,28 @@ const ListingDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (id) {
-      const fetchedListing = getListingById(id);
-      
-      if (fetchedListing) {
-        setListing(fetchedListing);
-        
-        // Fetch owner details
-        const fetchedOwner = getUserById(fetchedListing.ownerId);
-        setOwner(fetchedOwner || null);
+    const fetchListingAndOwner = async () => {
+      if (id) {
+        try {
+          setIsLoading(true);
+          const fetchedListing = await getListingById(id);
+          
+          if (fetchedListing) {
+            setListing(fetchedListing);
+            
+            // Fetch owner details
+            const fetchedOwner = await getUserById(fetchedListing.ownerId);
+            setOwner(fetchedOwner);
+          }
+        } catch (error) {
+          console.error('Error fetching listing details:', error);
+        } finally {
+          setIsLoading(false);
+        }
       }
-      
-      setIsLoading(false);
-    }
+    };
+
+    fetchListingAndOwner();
   }, [id]);
 
   const handleContactOwner = () => {
@@ -205,11 +215,11 @@ const ListingDetail = () => {
                       <p className="text-muted-foreground text-sm mb-2">Service Provider</p>
                       <div className="flex items-center gap-2 mb-1">
                         <Phone className="h-4 w-4" />
-                        <span className="text-sm">{owner.phone}</span>
+                        <span className="text-sm">{listing.contactPhone}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Mail className="h-4 w-4" />
-                        <span className="text-sm">{owner.email}</span>
+                        <span className="text-sm">{listing.contactEmail}</span>
                       </div>
                     </div>
                   </div>

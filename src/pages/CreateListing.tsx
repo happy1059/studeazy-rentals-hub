@@ -15,9 +15,12 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Category } from "@/types";
+import { createListing } from "@/services/listingsService";
+import { supabase } from "@/integrations/supabase/client";
 
 const CreateListing = () => {
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -28,6 +31,7 @@ const CreateListing = () => {
     contactPhone: "",
     contactEmail: "",
     amenities: "",
+    tags: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -39,7 +43,7 @@ const CreateListing = () => {
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Simple validation
@@ -48,11 +52,45 @@ const CreateListing = () => {
       return;
     }
 
-    // In a real app, this would send data to a backend
-    toast.success("Listing created successfully!");
-    setTimeout(() => {
-      navigate("/");
-    }, 2000);
+    // Check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Please log in to create a listing");
+      navigate("/auth");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const listingData = {
+        title: form.title,
+        description: form.description,
+        category: form.category,
+        price: parseInt(form.price),
+        price_unit: form.priceUnit,
+        location: form.location,
+        contact_phone: form.contactPhone,
+        contact_email: form.contactEmail,
+        tags: form.tags ? form.tags.split(',').map(tag => tag.trim()) : [],
+        amenities: form.amenities ? form.amenities.split(',').map(amenity => amenity.trim()) : [],
+        images: [] as string[],
+        features: {} as Record<string, any>,
+        status: 'active' as const
+      };
+
+      const listingId = await createListing(listingData);
+      
+      if (listingId) {
+        toast.success("Listing created successfully!");
+        navigate(`/listing/${listingId}`);
+      }
+    } catch (error) {
+      console.error('Error creating listing:', error);
+      toast.error("Failed to create listing. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -165,6 +203,17 @@ const CreateListing = () => {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="tags">Tags</Label>
+              <Input
+                id="tags"
+                name="tags"
+                value={form.tags}
+                onChange={handleChange}
+                placeholder="Add tags (comma separated)"
+              />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="contactPhone">Contact Phone*</Label>
@@ -193,10 +242,12 @@ const CreateListing = () => {
             </div>
 
             <div className="pt-4 flex justify-end gap-4">
-              <Button type="button" variant="outline" onClick={() => navigate("/")}>
+              <Button type="button" variant="outline" onClick={() => navigate("/")} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button type="submit">Create Listing</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Creating..." : "Create Listing"}
+              </Button>
             </div>
           </form>
         </div>
