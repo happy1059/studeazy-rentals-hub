@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { DatabaseListing } from "@/types/database";
 import { Listing } from "@/types";
@@ -131,12 +130,8 @@ export const createListing = async (listing: any): Promise<string | null> => {
       throw error;
     }
 
-    // Safely access the id property with explicit null check and type assertion
-    if (data !== null && typeof data === 'object' && 'id' in data) {
-      return data.id as string;
-    }
-
-    return null;
+    // Return the id if data exists and has an id property, otherwise return null
+    return (data && 'id' in data) ? data.id as string : null;
   } catch (error) {
     console.error('Error in createListing:', error);
     throw error;
