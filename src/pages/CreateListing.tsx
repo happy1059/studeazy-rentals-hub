@@ -1,38 +1,33 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Category } from "@/types";
 import { createListing } from "@/services/listingsService";
+import { setupTablesAndData } from "@/utils/setupTables";
 import { useAuth } from "@/hooks/useAuth";
+import Navbar from "@/components/Navbar";
 
 const CreateListing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState({
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
     title: "",
     description: "",
-    category: "" as Category,
     price: "",
     priceUnit: "month",
+    category: "",
     location: "",
     contactPhone: "",
     contactEmail: "",
-    amenities: "",
     tags: "",
+    amenities: "",
   });
 
   // Redirect to auth if not logged in
@@ -41,41 +36,28 @@ const CreateListing = () => {
     return null;
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setForm(prev => ({ ...prev, [name]: value }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Simple validation
-    if (!form.title || !form.description || !form.category || !form.price || !form.location) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
+    setIsLoading(true);
 
     try {
-      setIsSubmitting(true);
+      // First try to setup tables (this will be a no-op if they already exist)
+      await setupTablesAndData();
 
       const listingData = {
-        title: form.title,
-        description: form.description,
-        category: form.category,
-        price: parseInt(form.price),
-        price_unit: form.priceUnit,
-        location: form.location,
-        contact_phone: form.contactPhone,
-        contact_email: form.contactEmail,
-        tags: form.tags ? form.tags.split(',').map(tag => tag.trim()) : [],
-        amenities: form.amenities ? form.amenities.split(',').map(amenity => amenity.trim()) : [],
-        images: [] as string[],
-        features: {} as Record<string, any>,
-        status: 'active' as const
+        title: formData.title,
+        description: formData.description,
+        price: parseInt(formData.price),
+        price_unit: formData.priceUnit,
+        category: formData.category,
+        location: formData.location,
+        contact_phone: formData.contactPhone,
+        contact_email: formData.contactEmail,
+        tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+        amenities: formData.amenities.split(',').map(amenity => amenity.trim()).filter(amenity => amenity),
+        images: [],
+        features: {},
+        status: 'active'
       };
 
       const listingId = await createListing(listingData);
@@ -83,175 +65,160 @@ const CreateListing = () => {
       if (listingId) {
         toast.success("Listing created successfully!");
         navigate(`/listing/${listingId}`);
+      } else {
+        toast.error("Failed to create listing");
       }
     } catch (error) {
-      console.error('Error creating listing:', error);
-      toast.error("Failed to create listing. Please try again.");
+      console.error("Error creating listing:", error);
+      toast.error("Failed to create listing");
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
+  const handleChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <>
       <Navbar />
-
-      <div className="container py-8">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">Create a New Listing</h1>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title*</Label>
-              <Input
-                id="title"
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-                placeholder="Enter a descriptive title"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="category">Category*</Label>
-              <Select 
-                value={form.category} 
-                onValueChange={(value) => handleSelectChange("category", value)}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="accommodation">Accommodation</SelectItem>
-                  <SelectItem value="food">Food Service</SelectItem>
-                  <SelectItem value="laundry">Laundry Service</SelectItem>
-                  <SelectItem value="transport">Transportation</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+      <div className="container max-w-2xl mx-auto py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Create New Service Listing</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="price">Price*</Label>
+                <Label htmlFor="title">Title *</Label>
                 <Input
-                  id="price"
-                  name="price"
-                  type="number"
-                  value={form.price}
-                  onChange={handleChange}
-                  placeholder="Enter price"
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => handleChange("title", e.target.value)}
+                  placeholder="Enter service title"
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="priceUnit">Price Unit*</Label>
-                <Select 
-                  value={form.priceUnit} 
-                  onValueChange={(value) => handleSelectChange("priceUnit", value)}
-                >
+                <Label htmlFor="description">Description *</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => handleChange("description", e.target.value)}
+                  placeholder="Describe your service"
+                  rows={4}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="price">Price *</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    value={formData.price}
+                    onChange={(e) => handleChange("price", e.target.value)}
+                    placeholder="0"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="priceUnit">Price Unit</Label>
+                  <Select value={formData.priceUnit} onValueChange={(value) => handleChange("priceUnit", value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hour">Per Hour</SelectItem>
+                      <SelectItem value="day">Per Day</SelectItem>
+                      <SelectItem value="week">Per Week</SelectItem>
+                      <SelectItem value="month">Per Month</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="category">Category *</Label>
+                <Select value={formData.category} onValueChange={(value) => handleChange("category", value)} required>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select unit" />
+                    <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="hour">Per Hour</SelectItem>
-                    <SelectItem value="day">Per Day</SelectItem>
-                    <SelectItem value="week">Per Week</SelectItem>
-                    <SelectItem value="month">Per Month</SelectItem>
+                    <SelectItem value="accommodation">Accommodation</SelectItem>
+                    <SelectItem value="food">Food</SelectItem>
+                    <SelectItem value="laundry">Laundry</SelectItem>
+                    <SelectItem value="transport">Transport</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description*</Label>
-              <Textarea
-                id="description"
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                placeholder="Provide detailed information about what you're offering"
-                rows={5}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="location">Location*</Label>
-              <Input
-                id="location"
-                name="location"
-                value={form.location}
-                onChange={handleChange}
-                placeholder="Enter the location"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="amenities">Amenities/Features</Label>
-              <Textarea
-                id="amenities"
-                name="amenities"
-                value={form.amenities}
-                onChange={handleChange}
-                placeholder="List any amenities or features (comma separated)"
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tags">Tags</Label>
-              <Input
-                id="tags"
-                name="tags"
-                value={form.tags}
-                onChange={handleChange}
-                placeholder="Add tags (comma separated)"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="contactPhone">Contact Phone*</Label>
+                <Label htmlFor="location">Location *</Label>
                 <Input
-                  id="contactPhone"
-                  name="contactPhone"
-                  value={form.contactPhone}
-                  onChange={handleChange}
-                  placeholder="Your contact number"
+                  id="location"
+                  value={formData.location}
+                  onChange={(e) => handleChange("location", e.target.value)}
+                  placeholder="Enter location"
                   required
                 />
               </div>
-              
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="contactPhone">Contact Phone *</Label>
+                  <Input
+                    id="contactPhone"
+                    value={formData.contactPhone}
+                    onChange={(e) => handleChange("contactPhone", e.target.value)}
+                    placeholder="+1234567890"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contactEmail">Contact Email *</Label>
+                  <Input
+                    id="contactEmail"
+                    type="email"
+                    value={formData.contactEmail}
+                    onChange={(e) => handleChange("contactEmail", e.target.value)}
+                    placeholder="contact@example.com"
+                    required
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <Label htmlFor="contactEmail">Contact Email*</Label>
+                <Label htmlFor="tags">Tags (comma-separated)</Label>
                 <Input
-                  id="contactEmail"
-                  name="contactEmail"
-                  type="email"
-                  value={form.contactEmail}
-                  onChange={handleChange}
-                  placeholder="Your email address"
-                  required
+                  id="tags"
+                  value={formData.tags}
+                  onChange={(e) => handleChange("tags", e.target.value)}
+                  placeholder="affordable, convenient, reliable"
                 />
               </div>
-            </div>
 
-            <div className="pt-4 flex justify-end gap-4">
-              <Button type="button" variant="outline" onClick={() => navigate("/")} disabled={isSubmitting}>
-                Cancel
+              <div className="space-y-2">
+                <Label htmlFor="amenities">Amenities (comma-separated)</Label>
+                <Input
+                  id="amenities"
+                  value={formData.amenities}
+                  onChange={(e) => handleChange("amenities", e.target.value)}
+                  placeholder="WiFi, Parking, Air Conditioning"
+                />
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Creating..." : "Create Listing"}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Listing"}
-              </Button>
-            </div>
-          </form>
-        </div>
+            </form>
+          </CardContent>
+        </Card>
       </div>
-    </div>
+    </>
   );
 };
 

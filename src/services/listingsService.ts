@@ -4,7 +4,7 @@ import { DatabaseListing } from "@/types/database";
 import { Listing } from "@/types";
 
 // Convert database listing to app listing format
-const convertDatabaseListingToListing = (dbListing: DatabaseListing): Listing => {
+const convertDatabaseListingToListing = (dbListing: any): Listing => {
   return {
     id: dbListing.id,
     title: dbListing.title,
@@ -13,23 +13,23 @@ const convertDatabaseListingToListing = (dbListing: DatabaseListing): Listing =>
     priceUnit: dbListing.price_unit,
     category: dbListing.category,
     location: dbListing.location,
-    images: dbListing.images.length > 0 ? dbListing.images : ['/placeholder.svg'],
+    images: dbListing.images?.length > 0 ? dbListing.images : ['/placeholder.svg'],
     ownerId: dbListing.owner_id,
     contactPhone: dbListing.contact_phone,
     contactEmail: dbListing.contact_email,
     createdAt: new Date(dbListing.created_at),
     availableFrom: dbListing.available_from ? new Date(dbListing.available_from) : undefined,
     availableTo: dbListing.available_to ? new Date(dbListing.available_to) : undefined,
-    tags: dbListing.tags,
-    amenities: dbListing.amenities,
-    features: dbListing.features
+    tags: dbListing.tags || [],
+    amenities: dbListing.amenities || [],
+    features: dbListing.features || {}
   };
 };
 
 export const getAllListings = async (): Promise<Listing[]> => {
   try {
     const { data, error } = await supabase
-      .from('listings')
+      .from('listings' as any)
       .select('*')
       .eq('status', 'active')
       .order('created_at', { ascending: false });
@@ -49,7 +49,7 @@ export const getAllListings = async (): Promise<Listing[]> => {
 export const getListingById = async (id: string): Promise<Listing | null> => {
   try {
     const { data, error } = await supabase
-      .from('listings')
+      .from('listings' as any)
       .select('*')
       .eq('id', id)
       .eq('status', 'active')
@@ -70,7 +70,7 @@ export const getListingById = async (id: string): Promise<Listing | null> => {
 export const getListingsByCategory = async (category: string): Promise<Listing[]> => {
   try {
     const { data, error } = await supabase
-      .from('listings')
+      .from('listings' as any)
       .select('*')
       .eq('category', category)
       .eq('status', 'active')
@@ -91,7 +91,7 @@ export const getListingsByCategory = async (category: string): Promise<Listing[]
 export const searchListings = async (query: string): Promise<Listing[]> => {
   try {
     const { data, error } = await supabase
-      .from('listings')
+      .from('listings' as any)
       .select('*')
       .eq('status', 'active')
       .or(`title.ilike.%${query}%,description.ilike.%${query}%,location.ilike.%${query}%`)
@@ -109,7 +109,7 @@ export const searchListings = async (query: string): Promise<Listing[]> => {
   }
 };
 
-export const createListing = async (listing: Omit<DatabaseListing, 'id' | 'created_at' | 'updated_at' | 'owner_id'>): Promise<string | null> => {
+export const createListing = async (listing: any): Promise<string | null> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -118,7 +118,7 @@ export const createListing = async (listing: Omit<DatabaseListing, 'id' | 'creat
     }
 
     const { data, error } = await supabase
-      .from('listings')
+      .from('listings' as any)
       .insert([{
         ...listing,
         owner_id: user.id

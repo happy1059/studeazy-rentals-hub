@@ -3,13 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { DatabaseUserProfile } from "@/types/database";
 import { User } from "@/types";
 
-const convertDatabaseUserToUser = (dbUser: DatabaseUserProfile): User => {
+const convertDatabaseUserToUser = (dbUser: any): User => {
   return {
     id: dbUser.id,
     name: dbUser.name,
     email: '', // Email comes from auth.users, not our profile
     phone: dbUser.phone || '',
-    isOwner: dbUser.is_owner,
+    isOwner: dbUser.is_owner || false,
     avatar: dbUser.avatar
   };
 };
@@ -17,7 +17,7 @@ const convertDatabaseUserToUser = (dbUser: DatabaseUserProfile): User => {
 export const getUserById = async (id: string): Promise<User | null> => {
   try {
     const { data, error } = await supabase
-      .from('user_profiles')
+      .from('user_profiles' as any)
       .select('*')
       .eq('id', id)
       .single();
@@ -47,7 +47,7 @@ export const getCurrentUserProfile = async (): Promise<User | null> => {
   }
 };
 
-export const updateUserProfile = async (updates: Partial<DatabaseUserProfile>): Promise<void> => {
+export const updateUserProfile = async (updates: any): Promise<void> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -56,7 +56,7 @@ export const updateUserProfile = async (updates: Partial<DatabaseUserProfile>): 
     }
 
     const { error } = await supabase
-      .from('user_profiles')
+      .from('user_profiles' as any)
       .update(updates)
       .eq('id', user.id);
 
