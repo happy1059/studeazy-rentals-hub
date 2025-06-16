@@ -29,7 +29,7 @@ const convertDatabaseListingToListing = (dbListing: DatabaseListing): Listing =>
 export const getAllListings = async (): Promise<Listing[]> => {
   try {
     const { data, error } = await supabase
-      .from('listings' as any)
+      .from('listings')
       .select('*')
       .eq('status', 'active')
       .order('created_at', { ascending: false });
@@ -39,7 +39,7 @@ export const getAllListings = async (): Promise<Listing[]> => {
       return [];
     }
 
-    return (data as DatabaseListing[]).map(convertDatabaseListingToListing);
+    return (data || []).map(convertDatabaseListingToListing);
   } catch (error) {
     console.error('Error in getAllListings:', error);
     return [];
@@ -49,7 +49,7 @@ export const getAllListings = async (): Promise<Listing[]> => {
 export const getListingById = async (id: string): Promise<Listing | null> => {
   try {
     const { data, error } = await supabase
-      .from('listings' as any)
+      .from('listings')
       .select('*')
       .eq('id', id)
       .eq('status', 'active')
@@ -60,7 +60,7 @@ export const getListingById = async (id: string): Promise<Listing | null> => {
       return null;
     }
 
-    return convertDatabaseListingToListing(data as DatabaseListing);
+    return data ? convertDatabaseListingToListing(data) : null;
   } catch (error) {
     console.error('Error in getListingById:', error);
     return null;
@@ -70,7 +70,7 @@ export const getListingById = async (id: string): Promise<Listing | null> => {
 export const getListingsByCategory = async (category: string): Promise<Listing[]> => {
   try {
     const { data, error } = await supabase
-      .from('listings' as any)
+      .from('listings')
       .select('*')
       .eq('category', category)
       .eq('status', 'active')
@@ -81,7 +81,7 @@ export const getListingsByCategory = async (category: string): Promise<Listing[]
       return [];
     }
 
-    return (data as DatabaseListing[]).map(convertDatabaseListingToListing);
+    return (data || []).map(convertDatabaseListingToListing);
   } catch (error) {
     console.error('Error in getListingsByCategory:', error);
     return [];
@@ -91,7 +91,7 @@ export const getListingsByCategory = async (category: string): Promise<Listing[]
 export const searchListings = async (query: string): Promise<Listing[]> => {
   try {
     const { data, error } = await supabase
-      .from('listings' as any)
+      .from('listings')
       .select('*')
       .eq('status', 'active')
       .or(`title.ilike.%${query}%,description.ilike.%${query}%,location.ilike.%${query}%`)
@@ -102,7 +102,7 @@ export const searchListings = async (query: string): Promise<Listing[]> => {
       return [];
     }
 
-    return (data as DatabaseListing[]).map(convertDatabaseListingToListing);
+    return (data || []).map(convertDatabaseListingToListing);
   } catch (error) {
     console.error('Error in searchListings:', error);
     return [];
@@ -118,7 +118,7 @@ export const createListing = async (listing: Omit<DatabaseListing, 'id' | 'creat
     }
 
     const { data, error } = await supabase
-      .from('listings' as any)
+      .from('listings')
       .insert([{
         ...listing,
         owner_id: user.id
@@ -131,7 +131,7 @@ export const createListing = async (listing: Omit<DatabaseListing, 'id' | 'creat
       throw error;
     }
 
-    return data.id;
+    return data?.id || null;
   } catch (error) {
     console.error('Error in createListing:', error);
     throw error;

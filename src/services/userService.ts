@@ -17,7 +17,7 @@ const convertDatabaseUserToUser = (dbUser: DatabaseUserProfile): User => {
 export const getUserById = async (id: string): Promise<User | null> => {
   try {
     const { data, error } = await supabase
-      .from('user_profiles' as any)
+      .from('user_profiles')
       .select('*')
       .eq('id', id)
       .single();
@@ -27,7 +27,7 @@ export const getUserById = async (id: string): Promise<User | null> => {
       return null;
     }
 
-    return convertDatabaseUserToUser(data as DatabaseUserProfile);
+    return data ? convertDatabaseUserToUser(data) : null;
   } catch (error) {
     console.error('Error in getUserById:', error);
     return null;
@@ -56,7 +56,7 @@ export const updateUserProfile = async (updates: Partial<DatabaseUserProfile>): 
     }
 
     const { error } = await supabase
-      .from('user_profiles' as any)
+      .from('user_profiles')
       .update(updates)
       .eq('id', user.id);
 
