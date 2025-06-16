@@ -131,7 +131,7 @@ export const createListing = async (listing: any): Promise<string | null> => {
       throw error;
     }
 
-    // Safely access the id property with proper type checking
+    // Safely access the id property with proper null and type checking
     if (data && typeof data === 'object' && 'id' in data) {
       return (data as any).id;
     }
